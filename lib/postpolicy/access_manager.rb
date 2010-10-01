@@ -20,6 +20,7 @@ module PostPolicy
     end
 
     def check( args )
+      raise @@access_list.inspect
       action = DEFAULT_ACTION
       @@access_list.each do |access|
         if access.match?( args )

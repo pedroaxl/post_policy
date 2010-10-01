@@ -1,13 +1,12 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
-require "bundler"
+require 'bundler'
 Bundler.setup(:default)
 
-require File.join( File.dirname( __FILE__ ), '..', 'lib', 'postpolicy' )
+require File.join( File.dirname( __FILE__ ),'lib', 'postpolicy' )
 
-DEFAULT_CONFIG = File.exists?( '/etc/postpolicy.yml' ) ? '/etc/postpolicy.yml' : 
-                      File.join( File.dirname( __FILE__ ), '../postpolicy.yml')
+DEFAULT_CONFIG = File.join( File.dirname( __FILE__ ), 'config.yml')
 
 DEFAULT_OPTIONS = { 
   :verbose => false,

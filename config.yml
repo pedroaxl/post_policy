@@ -1,0 +1,5 @@
+--
+  blocked_domains:
+    callback: Mailee.blocked_domain? args
+    pass: HOLD
+    fail: DUNNO  

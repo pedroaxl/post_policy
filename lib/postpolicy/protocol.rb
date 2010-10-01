@@ -40,7 +40,7 @@ module PostPolicy
     end
 
     def response( action )
-      puts "action=#{action}#{TERMINATOR}" unless POST_POLICY_ENV == 'test'
+      puts "action=#{action}#{TERMINATOR}" #unless POST_POLICY_ENV == 'test'
     end
     
     protected
