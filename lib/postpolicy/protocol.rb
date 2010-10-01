@@ -70,7 +70,7 @@ module PostPolicy
     def sanitize_arguments
       missing_attributes = @@required_request_attributes - @attributes.keys.to_set
       unless missing_attributes.empty?     
-        Logger.err "missing #{missing_attributes.to_a.join( ',' )}" 
+        Logger.error "missing #{missing_attributes.to_a.join( ',' )}" 
         return false
       end
       unknown_attributes = @attributes.keys.to_set - @@request_attributes

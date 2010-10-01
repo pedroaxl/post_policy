@@ -2,7 +2,7 @@ require 'syslog'
 
 module Logger
 
-  @@app_name = "rpolicy"
+  @@app_name = "post_policy"
   @@log_opts = (Syslog::LOG_PID | Syslog::LOG_CONS)
   @@facility = Syslog::LOG_MAIL
   Syslog.open( @@app_name, @@log_opts, @@facility )
