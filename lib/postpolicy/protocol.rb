@@ -9,6 +9,7 @@ module PostPolicy
     TERMINATOR = "\n\n"
 
     attr_reader :attributes
+    attr_accessor :policies
 
     @@required_request_attributes = [:request, :protocol_state, :protocol_name, :helo_name, :queue_id, :sender, :recipient, :recipient_count, :client_address, :client_name, :reverse_client_name, :instance].to_set # Postfix 2.1 and later
   
@@ -19,11 +20,12 @@ module PostPolicy
   
     def initialize
       @attributes = {}
+      @policies = {}
       $stdout.sync = true
       @buffer = []
     end
 
-    def start!
+    def start!      
       while line = gets do
         receive_line( line.chomp )
       end
@@ -54,14 +56,15 @@ module PostPolicy
     end
 
     def run_actions
-      am = PostPolicy::AccessManager.new
-      am.callback do |args| 
-        am.check( args ) do |action|  
+      c = PostPolicy::Check.new
+      c.policies = @policies
+      c.callback do |args| 
+        c.check( args ) do |action|  
           Logger.debug "Returning response #{action}" if VERBOSE
           response( action )
         end
       end
-      am.set_deferred_status :succeeded, @attributes
+      c.set_deferred_status :succeeded, @attributes
     end
 
     def sanitize_arguments

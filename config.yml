@@ -1,5 +1,11 @@
---
-  blocked_domains:
-    callback: Mailee.blocked_domain? args
-    pass: HOLD
-    fail: DUNNO  
+# 
+blocked_domains:
+  callback: Mailee.blocked_domain? args
+  # the callback should return true if match
+  match: HOLD
+
+threshold:
+  callback: Mailee.threshold args
+  match: HOLD
+
+DEFAULT_ACTION: DUNNO  
