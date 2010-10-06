@@ -2,7 +2,7 @@ $LOAD_PATH.unshift File.join( File.dirname( __FILE__ ), '../lib' )
 require 'postpolicy'
 
 POST_POLICY_ENV = ENV['POST_POLICY_ENV'] || "test"
-
+DEFAULT_ACTION = "DUNNO"
 ATTRS = { 
   :request => "smtpd_access_policy",
   :protocol_state => "RCPT",

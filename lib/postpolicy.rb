@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'eventmachine'
 
 $:.unshift File.dirname( __FILE__ )
 

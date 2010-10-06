@@ -3,7 +3,7 @@
 require 'optparse'
 require 'yaml'
 require 'bundler'
-Bundler.setup(:default)
+Bundler.require(:default)
 
 require File.join( File.dirname( __FILE__ ),'lib', 'postpolicy' )
 
