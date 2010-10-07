@@ -29,6 +29,12 @@ describe Mailee do
       :encryption_keysize=>"256", 
       :etrn_domain=>nil
       }
+      r = Redis.new
+      @redis_mx = Redis::Namespace.new("#{@args1[:instance]}_mx", :redis => r)
+      @redis_threshold = Redis::Namespace.new("threshold", :redis => r)
+      @redis_domains = Redis::Namespace.new("#{@args1[:instance]}_domains", :redis => r)
+      @redis_hold = Redis::Namespace.new("#{@args1[:instance]}_hold", :redis => r)
+      
   end
   
   it "should resolv dns MX records" do
@@ -41,61 +47,63 @@ describe Mailee do
   end
   
   it "should return false if theres nothing holding that domain" do
-    redis_mx = Redis::Namespace.new("#{@args1[:instance]}_mx", :redis => Redis.new)
-    redis_mx.del 'ASPMX.L.GOOGLE.COM'
+    @redis_mx.del 'ASPMX.L.GOOGLE.COM'
     m = Mailee.new @args1
     m.greylisted?.should_not
   end
   
   it "should not return false if theres something holding that domain" do
-    redis_mx = Redis::Namespace.new("#{@args1[:instance]}_mx", :redis => Redis.new)
-    redis_mx.set 'ASPMX.L.GOOGLE.COM', true
+    @redis_mx.set 'ASPMX.L.GOOGLE.COM', true
     m = Mailee.new @args1
     m.greylisted?.should == 'ASPMX.L.GOOGLE.COM'
-    redis_mx.del 'ASPMX.L.GOOGLE.COM'
+    @redis_mx.del 'ASPMX.L.GOOGLE.COM'
     m.greylisted?.should == nil
     
-    redis_mx.set 'ASPMX3.GOOGLEMAIL.COM', true
+    @redis_mx.set 'ASPMX3.GOOGLEMAIL.COM', true
     m = Mailee.new @args1
     m.greylisted?.should == 'ASPMX3.GOOGLEMAIL.COM'
-    redis_mx.del 'ASPMX3.GOOGLEMAIL.COM'
+    @redis_mx.del 'ASPMX3.GOOGLEMAIL.COM'
     m.greylisted?.should == nil
   end
   
   it "should return the threshold of the domain" do
-    r = Redis.new
-    redis_threshold = Redis::Namespace.new("threshold", :redis => r)
     m = Mailee.new @args1
     m.threshold_of.should == 0
-    redis_threshold.set "softa.com.br", 60
+    @redis_threshold.set "softa.com.br", 60
     m.threshold_of.should == 60
-    redis_threshold.del "softa.com.br"
+    @redis_threshold.del "softa.com.br"
   end
   
   it "should return false and create the record if the domain does not exceeded that threshold" do
-    r = Redis.new
-    redis_domains = Redis::Namespace.new("#{@args1[:instance]}_domains", :redis => Redis.new)
-    redis_threshold = Redis::Namespace.new("threshold", :redis => r)
-    redis_domains.del("softa.com.br")
+    @redis_domains.del("softa.com.br")
     m = Mailee.new @args1
-    
     m.threshold_exceed?.should_not
-    Marshal.load(redis_domains.get("softa.com.br")).empty?.should == false
-    
-    redis_domains.del("softa.com.br")
-    redis_threshold.set "softa.com.br", 3
-    
-    redis_domains.set "softa.com.br", Marshal.dump([Time.now - 240, Time.now - 120])
-    Marshal.load(redis_domains.get("softa.com.br")).size.should == 2
-    
+    Marshal.load(@redis_domains.get("softa.com.br")).empty?.should == false
+    @redis_domains.del("softa.com.br")
+    @redis_threshold.set "softa.com.br", 3
+    @redis_domains.set "softa.com.br", Marshal.dump([Time.now - 240, Time.now - 120])
+    Marshal.load(@redis_domains.get("softa.com.br")).size.should == 2
     m.threshold_exceed?.should == false
-    Marshal.load(redis_domains.get("softa.com.br")).size.should == 3
-    
+    Marshal.load(@redis_domains.get("softa.com.br")).size.should == 3
     m.threshold_exceed?.should == true
-    Marshal.load(redis_domains.get("softa.com.br")).size.should == 3
-    
-    redis_threshold.del "softa.com.br"
-    
+    Marshal.load(@redis_domains.get("softa.com.br")).size.should == 3
+    @redis_threshold.del "softa.com.br"
+  end
+  
+   it "should schedule a message to greylisted domain" do
+    m = Mailee.new @args1
+    @redis_hold.del "softa.com.br"
+    m.schedule_delivery 10
+    hash = {:queue_id => '8045F2AB23', :recipient => 'pedro@softa.com.br'}
+    Marshal.load(@redis_hold.get("softa.com.br")).should == [hash]
+    hash_new = {:queue_id => '8045F2CD23', :recipient => 'joao@softa.com.br'}
+    @redis_hold.set "softa.com.br", Marshal.dump([hash_new])
+    m.schedule_delivery 1
+    array_new = Marshal.load(@redis_hold.get("softa.com.br"))
+    array_new.should == [hash_new,hash]
+  end
+  
+  it "should reevaluate the messages on hold" do
     
   end
   

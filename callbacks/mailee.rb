@@ -14,6 +14,7 @@ class Mailee
     r = Redis.new
     @redis_mx = Redis::Namespace.new("#{args[:instance]}_mx", :redis => r)
     @redis_domains = Redis::Namespace.new("#{args[:instance]}_domains", :redis => r)
+    @redis_hold = Redis::Namespace.new("#{args[:instance]}_hold", :redis => r)
     @redis_threshold = Redis::Namespace.new("threshold", :redis => r)
 
     @domain = args[:recipient].split('@').last
@@ -52,8 +53,20 @@ class Mailee
     false  
   end
   
+  def schedule_delivery time
+    r = Marshal.load(@redis_hold.get(@domain)) rescue []
+    r << {:queue_id => @args[:queue_id], :recipient => @args[:recipient]}
+    @redis_hold.set @domain, Marshal.dump(r)
+    # Setar Timer
+    EventMachine::add_timer time, Mailee.release_deliveries(@domain) if r.size == 1
+  end
+  
   def threshold_of
     @redis_threshold.get(@domain).to_i
+  end
+  
+  def self.release_deliveries domain
+    puts 'bbbbb'
   end
 
 end
